@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     implementation project(":shared")
+    implementation group: 'com.google.code.gson', name: 'gson', version: '2.+'
 }
 
 ext{

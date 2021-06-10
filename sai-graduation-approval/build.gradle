@@ -9,6 +9,9 @@ subprojects {
         // Logging
         implementation group: 'org.slf4j', name: 'slf4j-api', version: '2.0.0-alpha0'
         implementation group: 'org.slf4j', name: 'slf4j-simple', version: '2.0.0-alpha0'
+
+        //activemq
+        implementation group: 'org.apache.activemq', name: 'activemq-client', version: '5.15.9'
     }
 
     version = '1.0'

@@ -15,7 +15,11 @@ import java.util.ResourceBundle;
 @SuppressWarnings("unused")
 class ApprovalController implements Initializable {
 
+    private BrokerApplicationGateway gateway = null;
+
+    private final String queueName;
     private final String approvalName;
+
     @FXML
     private ListView<ListViewLine<ApprovalRequest, ApprovalReply>> lvApprovalRequestReply;
 
@@ -25,6 +29,13 @@ class ApprovalController implements Initializable {
 
     public ApprovalController(String approvalName, String queueName){
         this.approvalName = approvalName;
+        this.queueName = queueName;
+        gateway = new BrokerApplicationGateway(queueName) {
+            @Override
+            public void onBankRequestReceived(ApprovalRequest request) {
+                showApprovalRequest(request);
+            }
+        };
    }
 
     @FXML
@@ -40,6 +51,9 @@ class ApprovalController implements Initializable {
             Platform.runLater(() -> this.lvApprovalRequestReply.refresh());
             System.out.println("Approval application " + approvalName + " is sending " + approvalReply + " for " + approvalRequest);
             // @TODO send the approvalReply for selected approvalRequest
+
+            gateway.sendBankReply(approvalRequest, approvalReply);
+
         } else {
             System.err.println("Please select one request in the list!");
         }
@@ -77,5 +91,15 @@ class ApprovalController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
+    }
+
+    private void showApprovalRequest(ApprovalRequest bankRequest){
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                ListViewLine<ApprovalRequest, ApprovalReply> listViewLine = new ListViewLine<>(bankRequest);
+                lvApprovalRequestReply.getItems().add(listViewLine);
+            }
+        });
     }
 }

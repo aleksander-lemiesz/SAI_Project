@@ -18,6 +18,7 @@ import java.util.ResourceBundle;
 @SuppressWarnings("WeakerAccess")
 public class ClientController implements Initializable {
 
+    private BrokerApplicationGateway gateway = null;
 
     @FXML
     private TextField tfStudentNumber;
@@ -47,7 +48,12 @@ public class ClientController implements Initializable {
         ListViewLine<GraduationRequest, GraduationReply> listViewLine = new ListViewLine<>(graduationRequest);
         this.lvRequestReply.getItems().add(listViewLine);
 
-        //@TODO send the graduationRequest
+        //send the graduationRequest
+        try {
+            gateway.applyForGraduation(graduationRequest);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -76,6 +82,14 @@ public class ClientController implements Initializable {
         if (cbGroup.getItems().size() > 0){
             cbGroup.getSelectionModel().select(0);
         }
+
+        gateway = new BrokerApplicationGateway() {
+            @Override
+            public void onGraduationReplyReceived(GraduationRequest request, GraduationReply reply) {
+                getRequestReply(request).setReply(reply);
+                Platform.runLater(() -> lvRequestReply.refresh());
+            }
+        };
     }
 
     /**
