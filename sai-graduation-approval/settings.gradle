@@ -1,0 +1,4 @@
+rootProject.name = 'sai-graduation-approval'
+include 'approval'
+include 'client'
+include 'shared'

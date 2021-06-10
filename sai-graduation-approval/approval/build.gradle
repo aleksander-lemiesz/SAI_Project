@@ -1,0 +1,35 @@
+plugins {
+    id 'org.openjfx.javafxplugin' version '0.0.9'
+    id 'application'
+}
+
+dependencies {
+    implementation project(":shared")
+}
+
+ext{
+    myMainClass = 'graduation.approval.gui.ApprovalMain';
+    fxModules = [ 'javafx.controls', 'javafx.fxml' ]
+}
+
+
+javafx {
+    modules = fxModules
+}
+
+/*
+how to run with GRADLE
+
+run application with 2 arguments APP_NAME and REQUEST_QUEUE
+gradlew bank:run --args="APP_NAME REQUEST_QUEUE"
+
+for example, you could run three approval applications with:
+gradlew approval:run --args "Grad.CoordinatorSoftware softwareRequests"
+gradlew approval:run --args "Grad.CoordinatorTechnology technologyRequests"
+gradlew approval:run --args "ExamBoard examBoardRequests"
+*/
+application {
+    getMainClass().set(myMainClass)
+}
+
+
