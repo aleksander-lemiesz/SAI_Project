@@ -12,7 +12,6 @@ import javafx.scene.control.ListView;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-@SuppressWarnings("unused")
 class ApprovalController implements Initializable {
 
     private BrokerApplicationGateway gateway = null;
@@ -32,7 +31,7 @@ class ApprovalController implements Initializable {
         this.queueName = queueName;
         gateway = new BrokerApplicationGateway(queueName) {
             @Override
-            public void onBankRequestReceived(ApprovalRequest request) {
+            public void onApprovalRequestReceived(ApprovalRequest request) {
                 showApprovalRequest(request);
             }
         };
@@ -41,7 +40,6 @@ class ApprovalController implements Initializable {
     @FXML
     private void btnSendApprovalReplyClicked(){
         boolean isAccepted = cbApproved.isSelected();
-        System.out.println(isAccepted);
         ApprovalReply approvalReply = new ApprovalReply(isAccepted, approvalName);
 
         ListViewLine<ApprovalRequest, ApprovalReply> listViewLine = lvApprovalRequestReply.getSelectionModel().getSelectedItem();
@@ -49,10 +47,8 @@ class ApprovalController implements Initializable {
             ApprovalRequest approvalRequest = listViewLine.getRequest();
             listViewLine.setReply(approvalReply);
             Platform.runLater(() -> this.lvApprovalRequestReply.refresh());
-            System.out.println("Approval application " + approvalName + " is sending " + approvalReply + " for " + approvalRequest);
-            // @TODO send the approvalReply for selected approvalRequest
 
-            gateway.sendBankReply(approvalRequest, approvalReply);
+            gateway.sendApprovalReply(approvalRequest, approvalReply);
 
         } else {
             System.err.println("Please select one request in the list!");
@@ -93,11 +89,11 @@ class ApprovalController implements Initializable {
 
     }
 
-    private void showApprovalRequest(ApprovalRequest bankRequest){
+    private void showApprovalRequest(ApprovalRequest approvalRequest){
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
-                ListViewLine<ApprovalRequest, ApprovalReply> listViewLine = new ListViewLine<>(bankRequest);
+                ListViewLine<ApprovalRequest, ApprovalReply> listViewLine = new ListViewLine<>(approvalRequest);
                 lvApprovalRequestReply.getItems().add(listViewLine);
             }
         });

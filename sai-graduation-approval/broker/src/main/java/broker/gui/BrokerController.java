@@ -191,15 +191,15 @@ public class BrokerController implements Initializable {
 
 
         if (verifyExpression(SOFTWARE, bankRequest)) {
-            bankGateway.sendBankRequestToING(bankRequest);
+            bankGateway.sendApprovalRequestToSOFT(bankRequest);
             numberOfTimesSent++;
         }
         if (verifyExpression(TECHNOLOGY, bankRequest)) {
-            bankGateway.sendBankRequestToAMRO(bankRequest);
+            bankGateway.sendApprovalRequestToTECH(bankRequest);
             numberOfTimesSent++;
         }
         if (verifyExpression(EXAM_BOARD, bankRequest)) {
-            bankGateway.sendBankRequestToRABO(bankRequest);
+            bankGateway.sendApprovalRequestToEXAM(bankRequest);
             numberOfTimesSent++;
         }
         if (verifyExpression(RETURN, bankRequest)) {

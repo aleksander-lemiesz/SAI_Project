@@ -27,7 +27,7 @@ public abstract class ClientApplicationGateway {
                 try {
 
                     TextMessage textMessage = (TextMessage) msg;
-                    var request = deserializeBankRequest(textMessage.getText());
+                    var request = deserializeApprovalRequest(textMessage.getText());
                     var replyTo = msg.getJMSReplyTo();
                     requests.put(request, replyTo);
 
@@ -48,28 +48,25 @@ public abstract class ClientApplicationGateway {
         fromClientGateway.stop();
     }
 
-    public GraduationRequest deserializeBankRequest(String body) {
+    public GraduationRequest deserializeApprovalRequest(String body) {
         return new Gson().fromJson(body, GraduationRequest.class);
     }
 
-    public String serializeLoanReply(GraduationReply reply) {
+    public String serializeGraduationReply(GraduationReply reply) {
         return new Gson().toJson(reply);
     }
 
-    public String serializeLoanRequest(GraduationRequest request) {
+    public String serializeGraduationRequest(GraduationRequest request) {
         return new Gson().toJson(request);
     }
 
-    public String serializeLoanReplyAndRequest(GraduationReply reply, GraduationRequest request) {
-        return serializeLoanReply(reply) + " & " + serializeLoanRequest(request);
+    public String serializeGraduationReplyAndRequest(GraduationReply reply, GraduationRequest request) {
+        return serializeGraduationReply(reply) + " & " + serializeGraduationRequest(request);
     }
 
     public void sendGraduationReply(GraduationReply reply, GraduationRequest request) {
         try {
-            System.out.println("Request: " + request);
-            System.out.println("requests: " + requests);
-
-            Message msg = toClientGateway.createTextMessage(serializeLoanReplyAndRequest(reply, request));
+            Message msg = toClientGateway.createTextMessage(serializeGraduationReplyAndRequest(reply, request));
             var replyTo = requests.get(request);
             toClientGateway.send(msg, replyTo);
         } catch (JMSException e) {

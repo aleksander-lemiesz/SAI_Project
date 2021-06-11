@@ -16,16 +16,16 @@ public abstract class ApprovalApplicationGateway {
     private MessageSenderGateway toExamBoardGateway = null;
 
     //Receiver
-    private MessageReceiverGateway fromBankGateway = null;
+    private MessageReceiverGateway fromApprovalGateway = null;
 
     public ApprovalApplicationGateway() {
-        fromBankGateway = new MessageReceiverGateway("brokerReplyQueue");
+        fromApprovalGateway = new MessageReceiverGateway("brokerReplyQueue");
 
         toSoftwareGateway = new MessageSenderGateway("softwareRequests");
         toTechnologyGateway = new MessageSenderGateway("technologyRequests");
         toExamBoardGateway = new MessageSenderGateway("examBoardRequests");
 
-        fromBankGateway.setListener(new MessageListener() {
+        fromApprovalGateway.setListener(new MessageListener() {
             @Override
             public void onMessage(Message msg) {
                 try {
@@ -33,8 +33,8 @@ public abstract class ApprovalApplicationGateway {
                     TextMessage textMessage = (TextMessage) msg;
 
                     String split[] = textMessage.getText().split(" & ");
-                    ApprovalReply reply = deserializeBankReply(split[0]);
-                    ApprovalRequest request = deserializeBankRequest(split[1]);
+                    ApprovalReply reply = deserializeApprovalReply(split[0]);
+                    ApprovalRequest request = deserializeApprovalRequest(split[1]);
 
                     onApprovalReplyReceived(reply, request);
 
@@ -47,47 +47,47 @@ public abstract class ApprovalApplicationGateway {
 
     }
 
-    public abstract void onApprovalReplyReceived(ApprovalReply reply, ApprovalRequest bankRequest);
+    public abstract void onApprovalReplyReceived(ApprovalReply reply, ApprovalRequest approvalRequestRequest);
 
     public void stop() {
         toTechnologyGateway.stop();
         toSoftwareGateway.stop();
         toExamBoardGateway.stop();
-        fromBankGateway.stop();
+        fromApprovalGateway.stop();
     }
 
-    public ApprovalReply deserializeBankReply(String body) {
+    public ApprovalReply deserializeApprovalReply(String body) {
         return new Gson().fromJson(body, ApprovalReply.class);
     }
 
-    public ApprovalRequest deserializeBankRequest(String body) {
+    public ApprovalRequest deserializeApprovalRequest(String body) {
         return new Gson().fromJson(body, ApprovalRequest.class);
     }
 
-    public String serializeBankRequest(ApprovalRequest request) {
+    public String serializeApprovalRequest(ApprovalRequest request) {
         return new Gson().toJson(request);
     }
 
-    public void sendBankRequestToAMRO(ApprovalRequest bankRequest) {
+    public void sendApprovalRequestToTECH(ApprovalRequest approvalRequest) {
         try {
-            Message msg = toTechnologyGateway.createTextMessage(serializeBankRequest(bankRequest));
+            Message msg = toTechnologyGateway.createTextMessage(serializeApprovalRequest(approvalRequest));
             toTechnologyGateway.send(msg);
         } catch (JMSException e) {
             e.printStackTrace();
         }
     }
-    public void sendBankRequestToING(ApprovalRequest bankRequest) {
+    public void sendApprovalRequestToSOFT(ApprovalRequest approvalRequest) {
         try {
-            Message msg = toSoftwareGateway.createTextMessage(serializeBankRequest(bankRequest));
+            Message msg = toSoftwareGateway.createTextMessage(serializeApprovalRequest(approvalRequest));
             toSoftwareGateway.send(msg);
         } catch (JMSException e) {
             e.printStackTrace();
         }
     }
 
-    public void sendBankRequestToRABO(ApprovalRequest bankRequest) {
+    public void sendApprovalRequestToEXAM(ApprovalRequest approvalRequest) {
         try {
-            Message msg = toExamBoardGateway.createTextMessage(serializeBankRequest(bankRequest));
+            Message msg = toExamBoardGateway.createTextMessage(serializeApprovalRequest(approvalRequest));
             toExamBoardGateway.send(msg);
         } catch (JMSException e) {
             e.printStackTrace();

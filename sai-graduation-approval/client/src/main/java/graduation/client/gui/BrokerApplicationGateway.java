@@ -77,15 +77,6 @@ public abstract class BrokerApplicationGateway {
         return new Gson().fromJson(body, GraduationRequest.class);
     }
 
-    public ListViewLine<GraduationRequest, GraduationReply> deserializeLoanReplyAndRequest(String body) {
-        String split[] = body.split(" & ");
-        GraduationReply reply = deserializeGraduationReply(split[0]);
-        GraduationRequest request = deserializeGraduationRequest(split[1]);
-        ListViewLine<GraduationRequest, GraduationReply> listViewLine = new ListViewLine<>(request);
-        listViewLine.setReply(reply);
-        return listViewLine;
-    }
-
     public void stop() {
         msgSenderGateway.stop();
     }

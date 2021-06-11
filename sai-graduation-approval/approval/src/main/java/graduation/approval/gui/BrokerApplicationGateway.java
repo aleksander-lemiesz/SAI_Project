@@ -16,13 +16,13 @@ public abstract class BrokerApplicationGateway {
     private final MessageReceiverGateway msgReceiverGateway;
     private final MessageSenderGateway msgSenderGateway;
 
-    public abstract void onBankRequestReceived(ApprovalRequest request);
+    public abstract void onApprovalRequestReceived(ApprovalRequest request);
 
-    public void sendBankReply(ApprovalRequest request, ApprovalReply reply) {
+    public void sendApprovalReply(ApprovalRequest request, ApprovalReply reply) {
         try {
 
             // Serialize
-            String serialized = serializeBankReplyAndRequest(reply, request);
+            String serialized = serializeApprovalReplyAndRequest(reply, request);
 
             // Create the message
             TextMessage message = (TextMessage) msgSenderGateway.createTextMessage(serialized);
@@ -36,7 +36,6 @@ public abstract class BrokerApplicationGateway {
     }
 
     public BrokerApplicationGateway(String queue) {
-        //msgReceiverGateway = new MessageReceiverGateway("bankRequestQueue");
         msgSenderGateway = new MessageSenderGateway("brokerReplyQueue");
         msgReceiverGateway = new MessageReceiverGateway(queue);
 
@@ -49,10 +48,10 @@ public abstract class BrokerApplicationGateway {
                     String json = message.getText();
 
                     //deserialize json
-                    ApprovalRequest bankRequest = deserializeBankRequest(json);
+                    ApprovalRequest approvalRequest = deserializeApprovalRequest(json);
 
-                    //call abstr. meth. to pass the bankRequest
-                    onBankRequestReceived(bankRequest);
+                    //call abstr. meth. to pass the approvalRequest
+                    onApprovalRequestReceived(approvalRequest);
 
                 } catch (JMSException e) {
                     e.printStackTrace();
@@ -62,20 +61,20 @@ public abstract class BrokerApplicationGateway {
 
     }
 
-    public ApprovalRequest deserializeBankRequest(String body) {
+    public ApprovalRequest deserializeApprovalRequest(String body) {
         return new Gson().fromJson(body, ApprovalRequest.class);
     }
 
-    public String serializeBankReply(ApprovalReply reply) {
+    public String serializeApprovalReply(ApprovalReply reply) {
         return new Gson().toJson(reply);
     }
 
-    public String serializeBankRequest(ApprovalRequest request) {
+    public String serializeApprovalRequest(ApprovalRequest request) {
         return new Gson().toJson(request);
     }
 
-    public String serializeBankReplyAndRequest(ApprovalReply reply, ApprovalRequest request) {
-        return serializeBankReply(reply) + " & " + serializeBankRequest(request);
+    public String serializeApprovalReplyAndRequest(ApprovalReply reply, ApprovalRequest request) {
+        return serializeApprovalReply(reply) + " & " + serializeApprovalRequest(request);
     }
 
     public void stop() {
