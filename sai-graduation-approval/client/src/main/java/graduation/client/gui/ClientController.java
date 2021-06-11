@@ -102,6 +102,6 @@ public class ClientController implements Initializable {
      * This method is called in ClientMain when closing this JavaFX stage, i.e., when closing the application.
      */
     public void stop() {
-
+        gateway.stop();
     }
 }
