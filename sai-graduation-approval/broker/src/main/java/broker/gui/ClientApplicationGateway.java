@@ -64,8 +64,11 @@ public abstract class ClientApplicationGateway {
         return serializeLoanReply(reply) + " & " + serializeLoanRequest(request);
     }
 
-    public void sendLoanReply(GraduationReply reply, GraduationRequest request) {
+    public void sendGraduationReply(GraduationReply reply, GraduationRequest request) {
         try {
+            System.out.println("Request: " + request);
+            System.out.println("requests: " + requests);
+
             Message msg = toClientGateway.createTextMessage(serializeLoanReplyAndRequest(reply, request));
             var replyTo = requests.get(request);
             toClientGateway.send(msg, replyTo);

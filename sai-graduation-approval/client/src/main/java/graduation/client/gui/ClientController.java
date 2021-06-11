@@ -86,7 +86,13 @@ public class ClientController implements Initializable {
         gateway = new BrokerApplicationGateway() {
             @Override
             public void onGraduationReplyReceived(GraduationRequest request, GraduationReply reply) {
-                getRequestReply(request).setReply(reply);
+
+                for (ListViewLine<GraduationRequest, GraduationReply> listViewLine: lvRequestReply.getItems()) {
+                    if (listViewLine.getRequest().equals(request)) {
+                        listViewLine.setReply(reply);
+                    }
+                }
+
                 Platform.runLater(() -> lvRequestReply.refresh());
             }
         };

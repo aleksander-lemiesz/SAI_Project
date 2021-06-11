@@ -7,6 +7,8 @@ package shared.model.client;
 
 import shared.model.Group;
 
+import java.util.Objects;
+
 /**
  *
  * @author 884294
@@ -69,5 +71,17 @@ public class GraduationRequest {
        // return "stnr:"+ studentNumber + " gr: " + group.name().substring(0,4) + " comp:" + company + " proj:" + projectTitle ;
         return "["+ studentNumber + "]  [" + group.shortName() + "]  [" + company + "]  [" + projectTitle + "]";
     }
-    
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        GraduationRequest that = (GraduationRequest) o;
+        return studentNumber == that.studentNumber && Objects.equals(company, that.company) && Objects.equals(projectTitle, that.projectTitle) && group == that.group;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(studentNumber, company, projectTitle, group);
+    }
 }

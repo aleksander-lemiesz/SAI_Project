@@ -1,33 +1,33 @@
 package shared.model.broker;
 
 public class StudentInfo {
-    private int ec;
-    private String name;
+    private int graduationPhaseECs;
+    private String mentor;
 
     public StudentInfo() {
     }
 
-    public int getEc() {
-        return ec;
+    public int getGraduationPhaseECs() {
+        return graduationPhaseECs;
     }
 
-    public void setEc(int ec) {
-        this.ec = ec;
+    public void setGraduationPhaseECs(int graduationPhaseECs) {
+        this.graduationPhaseECs = graduationPhaseECs;
     }
 
-    public String getName() {
-        return name;
+    public String getMentor() {
+        return mentor;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setMentor(String mentor) {
+        this.mentor = mentor;
     }
 
     @Override
     public String toString() {
         return "StudentInfo{" +
-                "ec=" + ec +
-                ", name='" + name + '\'' +
+                "ec=" + graduationPhaseECs +
+                ", name='" + mentor + '\'' +
                 '}';
     }
 }

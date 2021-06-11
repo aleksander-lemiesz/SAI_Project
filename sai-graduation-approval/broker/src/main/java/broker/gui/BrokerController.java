@@ -29,7 +29,7 @@ import java.util.ResourceBundle;
 
 public class BrokerController implements Initializable {
 
-    private ClientApplicationGateway loanGateway = null;
+    private ClientApplicationGateway clientGateway = null;
     private ApprovalApplicationGateway bankGateway = null;
 
     // Linking LoanRequests with BankRequests
@@ -43,19 +43,24 @@ public class BrokerController implements Initializable {
     private ListView<ListViewLine<GraduationRequest, GraduationReply>> lvLoanRequestReply = new ListView<>();
 
     public BrokerController() {
-        loanGateway = new ClientApplicationGateway() {
+        clientGateway = new ClientApplicationGateway() {
             @Override
             public void onGraduationRequestReceived(GraduationRequest graduationRequest) {
                 StudentInfo studentInfoRequest = getStudentInfo(graduationRequest.getStudentNumber());
+                System.out.println(studentInfoRequest);
 
                 ApprovalRequest approvalRequest = new ApprovalRequest(graduationRequest.getStudentNumber(), graduationRequest.getCompany(),
-                        graduationRequest.getProjectTitle(), studentInfoRequest.getEc(), graduationRequest.getGroup());
+                        graduationRequest.getProjectTitle(), studentInfoRequest.getGraduationPhaseECs(), graduationRequest.getGroup());
 
-                checkAndSendRequest(approvalRequest);
+                boolean isValid = checkAndSendRequest(approvalRequest);
 
                 requests.put(approvalRequest, graduationRequest);
 
                 showGraduationRequest(graduationRequest);
+
+                if (!isValid) {
+                    rejectRequest(graduationRequest);
+                }
             }
         };
         bankGateway = new ApprovalApplicationGateway() {
@@ -75,8 +80,14 @@ public class BrokerController implements Initializable {
                         GraduationReply evaluatedGraduationReply =
                                 new GraduationReply(evaluatedBankReply.isApproved(), evaluatedBankReply.getName());
 
+                        System.out.println("ApprovalRequest: " + approvalRequest);
+
                         GraduationRequest request = requests.get(approvalRequest);
-                        loanGateway.sendLoanReply(evaluatedGraduationReply, request);
+
+                        System.out.println("OnApprovalReceived Request:" + request);
+                        System.out.println("OnApprovalReceived requests:" + requests);
+
+                        clientGateway.sendGraduationReply(evaluatedGraduationReply, request);
 
                         showAndUpdateGraduations(evaluatedGraduationReply, request);
 
@@ -85,6 +96,13 @@ public class BrokerController implements Initializable {
             }
         };
 
+    }
+
+    private void rejectRequest(GraduationRequest graduationRequest) {
+        GraduationReply evaluatedGraduationReply = new GraduationReply(false, "InvalidRequest");
+
+        clientGateway.sendGraduationReply(evaluatedGraduationReply, graduationRequest);
+        showAndUpdateGraduations(evaluatedGraduationReply, graduationRequest);
     }
 
     public int getAggregatorIndex(ApprovalRequest request) {
@@ -114,7 +132,6 @@ public class BrokerController implements Initializable {
 
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             StudentInfo entity = response.readEntity(StudentInfo.class);
-            //System.out.println("The service response is: " + entity);
             return entity;
         } else {
             System.err.println("ERROR: Cannot get path param! " + response);
@@ -138,11 +155,11 @@ public class BrokerController implements Initializable {
         });
     }
 
-    private void showAndUpdateGraduations(GraduationReply loanReply, GraduationRequest request) {
+    private void showAndUpdateGraduations(GraduationReply graduationReply, GraduationRequest graduationRequest) {
         for (ListViewLine<GraduationRequest, GraduationReply> list : lvLoanRequestReply.getItems()) {
             // assign reply to that line
-            if (request.equals(list.getRequest())) {
-                list.setReply(loanReply);
+            if (graduationRequest.equals(list.getRequest())) {
+                list.setReply(graduationReply);
             }
         }
         // Refreshing the list
@@ -150,7 +167,7 @@ public class BrokerController implements Initializable {
     }
 
     void stop() {
-        loanGateway.stop();
+        clientGateway.stop();
         bankGateway.stop();
     }
 
@@ -162,14 +179,16 @@ public class BrokerController implements Initializable {
 
     }
 
-    public void checkAndSendRequest(ApprovalRequest bankRequest) {
+    public boolean checkAndSendRequest(ApprovalRequest bankRequest) {
 
         Aggregator aggregator = new Aggregator(generateAggregationID(), bankRequest);
         int numberOfTimesSent = 0;
 
-        String SOFTWARE   = "ec >= 24 && group == 'software'";
-        String TECHNOLOGY = "ec >= 24 && group == 'technology'";
-        String EXAM_BOARD = "ec < 24  && group != ''";
+        String SOFTWARE   = "ec >= 24 && group = 1";
+        String TECHNOLOGY = "ec >= 24 && group = 2";
+        String EXAM_BOARD = "ec >= 24 && ec < 30  && group != 3";
+        String RETURN = "ec < 24  && group != 3";
+
 
         if (verifyExpression(SOFTWARE, bankRequest)) {
             bankGateway.sendBankRequestToING(bankRequest);
@@ -183,17 +202,32 @@ public class BrokerController implements Initializable {
             bankGateway.sendBankRequestToRABO(bankRequest);
             numberOfTimesSent++;
         }
+        if (verifyExpression(RETURN, bankRequest)) {
+            return false;
+        }
         aggregator.setNumberOfRepliesExpected(numberOfTimesSent);
         System.out.println("Aggregator added to the array: " + aggregator);
         aggregations.add(aggregator);
+        return true;
 
     }
 
     public boolean verifyExpression(String condition, ApprovalRequest approvalRequest) {
-        Argument ec = new Argument(" amount = " + approvalRequest.getEcs() + " ");
-        Argument group = new Argument(" time = " + approvalRequest.getGroup() + " ");
+        int software = 1;
+        int technology = 2;
+
+        Argument ec = new Argument(" ec = " + approvalRequest.getEcs());
+        Argument groupSoft = new Argument(" group = " + software + " ");
+        Argument groupTech = new Argument(" group = " + technology + " ");
+
         // Evaluate rule:
-        Expression expression = new Expression(condition, ec, group);
+        Expression expression = new Expression();
+
+        if (approvalRequest.getGroup().toString().equals("SOFTWARE")) {
+            expression = new Expression(condition, ec, groupSoft);
+        } else if (approvalRequest.getGroup().toString().equals("TECHNOLOGY")) {
+            expression = new Expression(condition, ec, groupTech);
+        }
         double result = expression.calculate();
         return result == 1.0;// 1.0 means TRUE, otherwise it is FALSE
     }

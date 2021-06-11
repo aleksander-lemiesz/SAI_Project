@@ -7,6 +7,8 @@ package shared.model.approval;
 
 import shared.model.Group;
 
+import java.util.Objects;
+
 /**
  *
  * @author 884294
@@ -79,5 +81,18 @@ public class ApprovalRequest {
      public String toString(){
         return "["+ studentNumber + "] [" + group.shortName()  +  "] [" + company + "] [" + projectTitle + "] ["
 				+ ecs + " ECs]";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ApprovalRequest that = (ApprovalRequest) o;
+        return studentNumber == that.studentNumber && ecs == that.ecs && Objects.equals(company, that.company) && Objects.equals(projectTitle, that.projectTitle) && group == that.group;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(studentNumber, company, projectTitle, ecs, group);
     }
 }
