@@ -26,6 +26,11 @@ class ApprovalController implements Initializable {
     private CheckBox cbApproved;
 
 
+    /**
+     * Constructor of ApprovalController. It sets its name and queue name.
+     * @param approvalName is the name of this new ApprovalController.
+     * @param queueName is the name of queue this new ApprovalController.
+     */
     public ApprovalController(String approvalName, String queueName){
         this.approvalName = approvalName;
         this.queueName = queueName;
@@ -81,7 +86,7 @@ class ApprovalController implements Initializable {
      * This method is called in ApprovalMain when closing this JavaFX stage, i.e., when closing the application.
      */
     public void stop() {
-
+        gateway.stop();
     }
 
     @Override
@@ -89,6 +94,10 @@ class ApprovalController implements Initializable {
 
     }
 
+    /**
+     * Updates the GUI with the new request.
+     * @param approvalRequest is the new request to be displayed in the list.
+     */
     private void showApprovalRequest(ApprovalRequest approvalRequest){
         Platform.runLater(new Runnable() {
             @Override
