@@ -1,5 +1,8 @@
 package shared.model.broker;
 
+/**
+ * Class representing student details that are received from the student administration system.
+ */
 public class StudentInfo {
     private int graduationPhaseECs;
     private String mentor;
