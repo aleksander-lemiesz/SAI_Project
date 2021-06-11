@@ -30,24 +30,23 @@ import java.util.ResourceBundle;
 public class BrokerController implements Initializable {
 
     private ClientApplicationGateway clientGateway = null;
-    private ApprovalApplicationGateway bankGateway = null;
+    private ApprovalApplicationGateway approvalGateway = null;
 
-    // Linking LoanRequests with BankRequests
+    // Linking GraduationRequests with ApprovalRequests
     private HashMap<ApprovalRequest, GraduationRequest> requests = new HashMap<>();
 
-    // Linking BankRequests with Aggregators
+    // Linking ApprovalRequests with Aggregators
     private ArrayList<Aggregator> aggregations = new ArrayList<>();
 
 
     @FXML
-    private ListView<ListViewLine<GraduationRequest, GraduationReply>> lvLoanRequestReply = new ListView<>();
+    private ListView<ListViewLine<GraduationRequest, GraduationReply>> lvRequestReply = new ListView<>();
 
     public BrokerController() {
         clientGateway = new ClientApplicationGateway() {
             @Override
             public void onGraduationRequestReceived(GraduationRequest graduationRequest) {
                 StudentInfo studentInfoRequest = getStudentInfo(graduationRequest.getStudentNumber());
-                System.out.println(studentInfoRequest);
 
                 ApprovalRequest approvalRequest = new ApprovalRequest(graduationRequest.getStudentNumber(), graduationRequest.getCompany(),
                         graduationRequest.getProjectTitle(), studentInfoRequest.getGraduationPhaseECs(), graduationRequest.getGroup());
@@ -63,12 +62,11 @@ public class BrokerController implements Initializable {
                 }
             }
         };
-        bankGateway = new ApprovalApplicationGateway() {
+        approvalGateway = new ApprovalApplicationGateway() {
             @Override
             public void onApprovalReplyReceived(ApprovalReply approvalReply, ApprovalRequest approvalRequest) {
 
                 var index = getAggregatorIndex(approvalRequest);
-                System.out.println("Aggregator from get: " + aggregations.get(index));
 
                 if (aggregations.get(index).getAggregationID() != 0) {
 
@@ -76,16 +74,11 @@ public class BrokerController implements Initializable {
 
                     if (aggregations.get(index).isReadyForFinalReply()) {
 
-                        ApprovalReply evaluatedBankReply = aggregations.get(index).getBestBankReply();
+                        ApprovalReply evaluatedApprovalReply = aggregations.get(index).getEvaluatedApprovalReply();
                         GraduationReply evaluatedGraduationReply =
-                                new GraduationReply(evaluatedBankReply.isApproved(), evaluatedBankReply.getName());
-
-                        System.out.println("ApprovalRequest: " + approvalRequest);
+                                new GraduationReply(evaluatedApprovalReply.isApproved(), evaluatedApprovalReply.getName());
 
                         GraduationRequest request = requests.get(approvalRequest);
-
-                        System.out.println("OnApprovalReceived Request:" + request);
-                        System.out.println("OnApprovalReceived requests:" + requests);
 
                         clientGateway.sendGraduationReply(evaluatedGraduationReply, request);
 
@@ -143,32 +136,32 @@ public class BrokerController implements Initializable {
     }
 
     /*
-     Use this method to show each bankRequest (upon message arrival) on the frame in a thread-safe way.
+     Use this method to show each GraduationRequest (upon message arrival) on the frame in a thread-safe way.
      */
     private void showGraduationRequest(GraduationRequest request) {
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
                 ListViewLine<GraduationRequest, GraduationReply> listViewLine = new ListViewLine<>(request);
-                lvLoanRequestReply.getItems().add(listViewLine);
+                lvRequestReply.getItems().add(listViewLine);
             }
         });
     }
 
     private void showAndUpdateGraduations(GraduationReply graduationReply, GraduationRequest graduationRequest) {
-        for (ListViewLine<GraduationRequest, GraduationReply> list : lvLoanRequestReply.getItems()) {
+        for (ListViewLine<GraduationRequest, GraduationReply> list : lvRequestReply.getItems()) {
             // assign reply to that line
             if (graduationRequest.equals(list.getRequest())) {
                 list.setReply(graduationReply);
             }
         }
         // Refreshing the list
-        Platform.runLater(() -> lvLoanRequestReply.refresh());
+        Platform.runLater(() -> lvRequestReply.refresh());
     }
 
     void stop() {
         clientGateway.stop();
-        bankGateway.stop();
+        approvalGateway.stop();
     }
 
     /*
@@ -179,9 +172,9 @@ public class BrokerController implements Initializable {
 
     }
 
-    public boolean checkAndSendRequest(ApprovalRequest bankRequest) {
+    public boolean checkAndSendRequest(ApprovalRequest approvalRequest) {
 
-        Aggregator aggregator = new Aggregator(generateAggregationID(), bankRequest);
+        Aggregator aggregator = new Aggregator(generateAggregationID(), approvalRequest);
         int numberOfTimesSent = 0;
 
         String SOFTWARE   = "ec >= 24 && group = 1";
@@ -190,23 +183,22 @@ public class BrokerController implements Initializable {
         String RETURN = "ec < 24  && group != 3";
 
 
-        if (verifyExpression(SOFTWARE, bankRequest)) {
-            bankGateway.sendApprovalRequestToSOFT(bankRequest);
+        if (verifyExpression(SOFTWARE, approvalRequest)) {
+            approvalGateway.sendApprovalRequestToSOFT(approvalRequest);
             numberOfTimesSent++;
         }
-        if (verifyExpression(TECHNOLOGY, bankRequest)) {
-            bankGateway.sendApprovalRequestToTECH(bankRequest);
+        if (verifyExpression(TECHNOLOGY, approvalRequest)) {
+            approvalGateway.sendApprovalRequestToTECH(approvalRequest);
             numberOfTimesSent++;
         }
-        if (verifyExpression(EXAM_BOARD, bankRequest)) {
-            bankGateway.sendApprovalRequestToEXAM(bankRequest);
+        if (verifyExpression(EXAM_BOARD, approvalRequest)) {
+            approvalGateway.sendApprovalRequestToEXAM(approvalRequest);
             numberOfTimesSent++;
         }
-        if (verifyExpression(RETURN, bankRequest)) {
+        if (verifyExpression(RETURN, approvalRequest)) {
             return false;
         }
         aggregator.setNumberOfRepliesExpected(numberOfTimesSent);
-        System.out.println("Aggregator added to the array: " + aggregator);
         aggregations.add(aggregator);
         return true;
 

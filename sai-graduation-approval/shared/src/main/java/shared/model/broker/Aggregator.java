@@ -79,7 +79,7 @@ public class Aggregator {
         return numberOfReplies == numberOfRepliesExpected;
     }
 
-    public ApprovalReply getBestBankReply() {
+    public ApprovalReply getEvaluatedApprovalReply() {
         if (replies.isEmpty()) {
             System.out.println("The list is empty!");
             return null;
